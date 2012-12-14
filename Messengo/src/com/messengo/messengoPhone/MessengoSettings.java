@@ -4,6 +4,8 @@ import java.util.List;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,7 +15,6 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
-import android.widget.Button;
 import android.widget.Toast;
 
 public class MessengoSettings extends PreferenceActivity {
@@ -34,11 +35,6 @@ public class MessengoSettings extends PreferenceActivity {
 		if (!isSimplePreferences(this)) {
 			return;
 		}
-
-		// In the simplified UI, fragments are not used at all and we instead
-		// use the older PreferenceActivity APIs.
-
-		// Add 'general' preferences.
 		addPreferencesFromResource(R.xml.pref_general);
 
 		PreferenceCategory fakeHeader = new PreferenceCategory(this);
