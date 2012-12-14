@@ -13,6 +13,7 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
+import android.widget.Button;
 import android.widget.Toast;
 
 public class MessengoSettings extends PreferenceActivity {
@@ -44,7 +45,7 @@ public class MessengoSettings extends PreferenceActivity {
 		fakeHeader.setTitle(R.string.pref_header_data_sync);
 		getPreferenceScreen().addPreference(fakeHeader);
 		addPreferencesFromResource(R.xml.pref_data_sync);
-
+		
 		bindPreferenceSummaryToValue(findPreference("account"));
 		
 		Preference save = (Preference)findPreference("saveSms");
