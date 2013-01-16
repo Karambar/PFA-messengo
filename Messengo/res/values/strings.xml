@@ -1,5 +1,5 @@
 <resources>
 
     <string name="app_name">Messengo</string>
-
+	<string name="CLIENT_ID">245096161427</string>
 </resources>
