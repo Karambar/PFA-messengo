@@ -1,0 +1,13 @@
+<resources>
+
+    <string name="app_name">Messengo</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_login">Messengo</string>
+
+    
+    
+    <string name="loginAccount">Connection</string>
+    <string name="GetAccountMsg">Afin d\'utiliser Messengo, nous avons besoin de votre compte gmail utilise sur votre Smartphone. Veuillez nous l\'indiquer ci-dessous :</string>
+ 
+</resources>
