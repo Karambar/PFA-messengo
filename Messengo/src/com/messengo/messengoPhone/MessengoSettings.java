@@ -1,5 +1,8 @@
 package com.messengo.messengoPhone;
 
+import static com.messengo.messengoPhone.CommonUtilities.SENDER_ID;
+import static com.messengo.messengoPhone.CommonUtilities.TAG;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,10 +15,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.accounts.AccountManager;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -29,47 +30,74 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive;
+import com.google.android.gcm.GCMRegistrar;
 
 public class MessengoSettings extends PreferenceActivity {
 
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
+    AsyncTask<Void, Void, Void> mRegisterTask;
+    public static String number;
+    public static String email;
 
-	private GoogleAccountCredential credential;
-	@SuppressWarnings("unused")
-	private static Drive service;
-
-	private Drive getDriveService(GoogleAccountCredential credential) {
-		return new Drive.Builder(AndroidHttp.newCompatibleTransport(), new GsonFactory(), credential)
-		.build();
-	}
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
 		setupSimplePreferencesScreen();
+	    
+	    number = CommonUtilities.getPhoneNumber(this);
+	    email = CommonUtilities.getEmail(this);     
 
-		//		GCMRegistrar.checkManifest(this);
-		//		final String regId = GCMRegistrar.getRegistrationId(this);
-		//		if (regId.equals("")) {
-		//			Log.d("messengo", "Registering");
-		//			GCMRegistrar.register(this, getString(R.string.CLIENT_ID));
-		//		} else {
-		//			Log.d("messengo", "Already registered: " + regId);
-		//		}
-		//		  try {
-		//			Log.d("messengo", writeUsingXMLSerializer());
-		//		} catch (Exception e) {
-		//			Log.d("messengo", "exception : " + e);
-		//			e.printStackTrace();
-		//		}
-		//		credential = GoogleAccountCredential.usingOAuth2(this, DriveScopes.DRIVE);
-		//		startActivityForResult(credential.newChooseAccountIntent(), 1);
+        // Make sure the device has the proper dependencies.
+        GCMRegistrar.checkDevice(this);
+        // Make sure the manifest was properly set - comment out this line
+        // while developing the app, then uncomment it when it's ready.
+        GCMRegistrar.checkManifest(this);
+        final String regId = GCMRegistrar.getRegistrationId(this);
+        if (regId.equals("")) {
+            // Automatically registers application on startup.
+            GCMRegistrar.register(this, SENDER_ID);
+        } else {
+            // Device is already registered on GCM, check server.
+            if (GCMRegistrar.isRegisteredOnServer(this)) {
+                // Skips registration.
+            	Log.d(TAG, "skipping");
+            } else {
+                // Try to register again, but not in the UI thread.
+                // It's also necessary to cancel the thread onDestroy(),
+                // hence the use of AsyncTask instead of a raw thread.
+                final Context context = this;
+                mRegisterTask = new AsyncTask<Void, Void, Void>() {
 
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                    	ServerUtilities.register(context, number, email, regId);
+                    	return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void result) {
+                        mRegisterTask = null;
+                    }
+
+                };
+                mRegisterTask.execute(null, null, null);
+            }
+        }
 	}
+
+	  @Override
+	  public void onResume() {
+	    super.onResume();
+	 //   registerReceiver(mGCMReceiver, mOnRegisteredFilter);
+	  }
+
+	  @Override
+	  public void onPause() {
+	    super.onPause();
+	  }
+
+	
 	public class toto extends AsyncTask<String, Void, Void> {
 
 		@Override
@@ -137,17 +165,6 @@ public class MessengoSettings extends PreferenceActivity {
 		}
 	};
 
-
-	protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-		if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
-			String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-			if (accountName != null) {
-				credential.setSelectedAccountName(accountName);
-				service = getDriveService(credential);
-			}
-		}
-
-	}
 
 	@Override
 	public boolean onIsMultiPane() {

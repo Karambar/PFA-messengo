@@ -20,6 +20,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.util.Xml;
 import android.widget.Toast;
 
@@ -29,6 +31,7 @@ public class SmsManager {
 	private Context ct;
 	private List<String> bodyList;
 	private List<String> numberList;
+	private List<String> date_sent;
 	private File file;
 
 
@@ -36,19 +39,34 @@ public class SmsManager {
 		this.ct = ct;
 		bodyList = new ArrayList<String>();
 		numberList = new ArrayList<String>();
+		date_sent = new ArrayList<String>();
 	}
 
 	public void retrieveSMS(){
-		Uri uriSMSURI = Uri.parse("content://sms/inbox");
+		Uri uriSMSURI = Uri.parse("content://sms/");
 		Cursor cur = ct.getContentResolver().query(uriSMSURI, null, null, null, null);
-
+		for (int i = 0; i < cur.getColumnNames().length ; i++) {
+			Log.d("MESSENGO", cur.getColumnNames()[i]);
+		}
 		while (cur.moveToNext()) {
 			String address = cur.getString(cur.getColumnIndex("address"));
 			String body = null;
 			try {
+				int type = cur.getInt(cur.getColumnIndexOrThrow("type"));
 				body = URLEncoder.encode(cur.getString(cur.getColumnIndexOrThrow("body")).toString(), "UTF-8");
+				String messageDate = cur.getString(cur.getColumnIndex("date_sent"));
 				bodyList.add(body);
-				numberList.add(address);
+				date_sent.add(messageDate);
+				if (type == 1) {
+					numberList.add(address);
+					Log.d("MESSENGO",address + " " + body + " " + messageDate);
+				}
+				else {
+					TelephonyManager tMgr =(TelephonyManager)ct.getSystemService(Context.TELEPHONY_SERVICE);
+					String mPhoneNumber = tMgr.getLine1Number();
+					numberList.add(mPhoneNumber);
+					Log.d("MESSENGO",mPhoneNumber + " " + body + " " + messageDate);
+				}
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			} catch (IllegalArgumentException e) {
