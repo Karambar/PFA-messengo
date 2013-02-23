@@ -1,126 +1,69 @@
 package com.messengo.messengoPhone;
 
-import static com.messengo.messengoPhone.CommonUtilities.SENDER_ID;
-import static com.messengo.messengoPhone.CommonUtilities.TAG;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gcm.GCMRegistrar;
 
 public class MessengoSettings extends PreferenceActivity {
 
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
-    AsyncTask<Void, Void, Void> mRegisterTask;
-    public static String number;
-    public static String email;
-
+	public static String regId;
+	private ConnectionManager cntMgr;
+	private Account                 gmailAddress;
+	private  AccountManager googleAccountManager;
+	private Account[]               allAccounts;
+	private SharedPreferences settings;
+	private SharedPreferences.Editor editor;
+	
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
 		setupSimplePreferencesScreen();
-	    
-	    number = CommonUtilities.getPhoneNumber(this);
-	    email = CommonUtilities.getEmail(this);     
 
-        // Make sure the device has the proper dependencies.
-        GCMRegistrar.checkDevice(this);
-        // Make sure the manifest was properly set - comment out this line
-        // while developing the app, then uncomment it when it's ready.
-        GCMRegistrar.checkManifest(this);
-        final String regId = GCMRegistrar.getRegistrationId(this);
-        if (regId.equals("")) {
-            // Automatically registers application on startup.
-            GCMRegistrar.register(this, SENDER_ID);
-        } else {
-            // Device is already registered on GCM, check server.
-            if (GCMRegistrar.isRegisteredOnServer(this)) {
-                // Skips registration.
-            	Log.d(TAG, "skipping");
-            } else {
-                // Try to register again, but not in the UI thread.
-                // It's also necessary to cancel the thread onDestroy(),
-                // hence the use of AsyncTask instead of a raw thread.
-                final Context context = this;
-                mRegisterTask = new AsyncTask<Void, Void, Void>() {
+		cntMgr = new ConnectionManager(this);
+		cntMgr.registerGCM();
 
-                    @Override
-                    protected Void doInBackground(Void... params) {
-                    	ServerUtilities.register(context, number, email, regId);
-                    	return null;
-                    }
+		googleAccountManager = AccountManager.get(this);
+		allAccounts = googleAccountManager.getAccountsByType("com.google");
+		gmailAddress = allAccounts[0];
 
-                    @Override
-                    protected void onPostExecute(Void result) {
-                        mRegisterTask = null;
-                    }
+		AuthService.getInstance().refreshAuthToken(this, gmailAddress);
+		settings = getSharedPreferences(AuthService.PREF_NAME, 0);
+		editor = settings.edit();
+		String accessToken = settings.getString(AuthService.PREF_TOKEN, "");    
 
-                };
-                mRegisterTask.execute(null, null, null);
-            }
-        }
+		cntMgr.connectToWS(accessToken);
 	}
 
-	  @Override
-	  public void onResume() {
-	    super.onResume();
-	 //   registerReceiver(mGCMReceiver, mOnRegisteredFilter);
-	  }
 
-	  @Override
-	  public void onPause() {
-	    super.onPause();
-	  }
 
-	
-	public class toto extends AsyncTask<String, Void, Void> {
-
-		@Override
-		protected Void doInBackground(String... params) {
-			HttpClient client = new DefaultHttpClient();
-			HttpGet get = new HttpGet();
-			try {
-				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0]));
-				HttpResponse response = client.execute(get);
-				HttpEntity entity = response.getEntity();
-				Log.d("messengo", ConvertToString.convertStreamToString(entity.getContent()));
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-
+	@Override
+	public void onResume() {
+		super.onResume();
 	}
 
+	@Override
+	public void onPause() {
+		super.onPause();
+	}
 
 	@SuppressWarnings("deprecation")
 	private void setupSimplePreferencesScreen() {
@@ -136,22 +79,21 @@ public class MessengoSettings extends PreferenceActivity {
 
 		bindPreferenceSummaryToValue(findPreference("account"));
 
+		Preference active = (Preference)findPreference("active_checkbox");
+		active.setOnPreferenceChangeListener(activeMessengo); 
 		Preference save = (Preference)findPreference("saveSms");
 		save.setOnPreferenceClickListener(saveSms);
 		Preference delete = (Preference)findPreference("clean");
 		delete.setOnPreferenceClickListener(clean);
 	}
 
-	//TODO: Faire les vraies actions :)
 	public OnPreferenceClickListener saveSms = new OnPreferenceClickListener() {
 
 		@Override
 		public boolean onPreferenceClick(Preference preference) {
 			Toast.makeText(MessengoSettings.this, "Sauvegarde des sms en cours ...", Toast.LENGTH_SHORT).show();
-			SmsManager sms = new SmsManager(MessengoSettings.this);
-			sms.retrieveSMS();
-			sms.writeToFile();
-			sms.sendViaMail();
+			SmsManage sms = new SmsManage(MessengoSettings.this);
+			sms.extract();
 			return false;
 		}
 	};
@@ -165,12 +107,22 @@ public class MessengoSettings extends PreferenceActivity {
 		}
 	};
 
-
+	public OnPreferenceChangeListener activeMessengo = new Preference.OnPreferenceChangeListener() {            
+	    public boolean onPreferenceChange(Preference preference, Object newValue) {
+	        if(newValue instanceof Boolean){
+	        	editor.putBoolean("active", (Boolean) newValue);
+	        	editor.commit();
+	        }
+	        return true;
+	    }
+	};
+	
 	@Override
 	public boolean onIsMultiPane() {
 		return isXLargeTablet(this) && !isSimplePreferences(this);
 	}
 
+	@SuppressLint("InlinedApi")
 	private static boolean isXLargeTablet(Context context) {
 		return (context.getResources().getConfiguration().screenLayout
 				& Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
