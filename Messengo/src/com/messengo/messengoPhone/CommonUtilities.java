@@ -12,7 +12,7 @@ import android.util.Patterns;
 public final class CommonUtilities {
 
 	static final String SERVER_URL = "http://messengo.webia-asso.fr/gcm_server/register.php";
-	static final String SENDER_ID = "985643011238";
+	static final String SENDER_ID = "245096161427";
 	static final String TAG = "Messengo";
 
 

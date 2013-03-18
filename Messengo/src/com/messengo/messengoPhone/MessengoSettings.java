@@ -1,5 +1,6 @@
 package com.messengo.messengoPhone;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.accounts.Account;
@@ -18,6 +19,7 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.widget.Toast;
 
 
@@ -36,13 +38,13 @@ public class MessengoSettings extends PreferenceActivity {
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
+		googleAccountManager = AccountManager.get(this);
+		allAccounts = googleAccountManager.getAccountsByType("com.google");
 		setupSimplePreferencesScreen();
 
 		cntMgr = new ConnectionManager(this);
 		cntMgr.registerGCM();
 
-		googleAccountManager = AccountManager.get(this);
-		allAccounts = googleAccountManager.getAccountsByType("com.google");
 		gmailAddress = allAccounts[0];
 
 		AuthService.getInstance().refreshAuthToken(this, gmailAddress);
@@ -77,8 +79,23 @@ public class MessengoSettings extends PreferenceActivity {
 		getPreferenceScreen().addPreference(fakeHeader);
 		addPreferencesFromResource(R.xml.pref_data_sync);
 
+		
 		bindPreferenceSummaryToValue(findPreference("account"));
-
+		ArrayList<String> entries = new ArrayList<String>();
+		
+		for (int i = 0;i < allAccounts.length ; i++) {
+			entries.add(allAccounts[i].toString());
+		}
+		
+/*		ListPreference accountList = (ListPreference) findPreference("accountList");
+		String[] entriesArray = entries.toArray(new String[entries.size()]);
+		if (entriesArray == null)
+			Log.d("MESSENGO", "EntriesArray null");
+		if (accountList == null)
+			Log.d("MESSENGO", "AccountList null");
+		accountList.setEntries(entriesArray);
+		accountList.setEntryValues(entriesArray);
+*/ 
 		Preference active = (Preference)findPreference("active_checkbox");
 		active.setOnPreferenceChangeListener(activeMessengo); 
 		Preference save = (Preference)findPreference("saveSms");

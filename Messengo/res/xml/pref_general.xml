@@ -5,7 +5,7 @@
         android:key="active_checkbox"
         android:title="@string/pref_title_checkbox_active" />
 
-    <EditTextPreference
+<!--     <EditTextPreference
         android:dependency="active_checkbox"
         android:capitalize="words"
         android:defaultValue="@string/pref_default_display_name"
@@ -15,8 +15,16 @@
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="@string/pref_title_display_account" />
-
+ -->
+    <ListPreference
+        android:dependency="active_checkbox"
+        android:defaultValue="-1"
+        android:key="accountList"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="J'ai choisi"
+        android:title="@string/pref_title_add_friends_to_messages" />
     <!--
+    
          NOTE: Hide buttons to simplify the UI. Users can touch outside the dialog to
          dismiss it.
     -->
