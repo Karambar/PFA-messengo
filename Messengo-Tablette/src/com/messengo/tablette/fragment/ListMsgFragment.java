@@ -7,27 +7,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.messengo.tablette.activity.ListMsgActivity;
-import com.messengo.tablette.activity.MsgDetailActivity;
-import com.messengo.tablette.activity.R;
-import com.messengo.tablette.adapter.MsgListAdapter;
-import com.messengo.tablette.bean.Conversation;
-import com.messengo.tablette.bean.Message;
-import com.messengo.tablette.bean.User;
-import com.messengo.tablette.webservice.WebService;
-
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
+
+import com.messengo.tablette.activity.ListMsgActivity;
+import com.messengo.tablette.activity.R;
+import com.messengo.tablette.adapter.MsgListAdapter;
+import com.messengo.tablette.bean.Conversation;
+import com.messengo.tablette.bean.Message;
+import com.messengo.tablette.bean.User;
+import com.messengo.tablette.webservice.WebService;
 
 public class ListMsgFragment extends Fragment implements OnItemClickListener, Runnable{
 
@@ -37,6 +37,20 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 	private ArrayList<Conversation> data =  new ArrayList<Conversation>();
 		
 	private User 					myUser = null;
+
+	/**
+	 * @return the myUser
+	 */
+	public User getMyUser() {
+		return myUser;
+	}
+
+	/**
+	 * @param myUser the myUser to set
+	 */
+	public void setMyUser(User myUser) {
+		this.myUser = myUser;
+	}
 
 	private static final int HANDLER_START_PROGRESS = 1;
 	private static final int HANDLER_STOP_PROGRESS_SUCCESS = 2;
@@ -57,6 +71,10 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		return mainView;
 	}
 	
+	public void updateMessageList(){
+		new Thread(this).start();
+	}
+	
 	private void updateListView(){
 		if (data.isEmpty() || data == null)
 			 Toast.makeText(getActivity(), "Vous n'avez aucun messages.", Toast.LENGTH_SHORT).show();
@@ -73,6 +91,7 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		ArrayList<Message>	tmpAllMessages = new ArrayList<Message>();
 		Message				tmpMessage;
 
+		data.clear();
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
 			JSONObject responseObject = objectCreated.optJSONObject("response");			
@@ -84,6 +103,7 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 					JSONObject aConversation = infoObject.getJSONObject(i);
 					tmpConversation.setUserId(Integer.valueOf(aConversation.optString("with_userId")));
 					tmpConversation.setUserName(aConversation.optString("with_userName"));
+					tmpConversation.setUserTel(aConversation.optString("with_userTel"));
 					JSONArray allMessages = aConversation.optJSONArray("conversation");
 					j = -1;
 					tmpAllMessages = new ArrayList<Message>();
@@ -106,13 +126,11 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 			}
 		}
 	}
+	
+
 
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-	    ((ListMsgActivity)getActivity()).onObjectChoosen(data.get(position).getConversation());
-		
-//		Intent intent = new Intent(getActivity().getApplicationContext(), MsgDetailActivity.class);
-//		intent.putExtra(ListMsgActivity.INTENT_DATA, data.get(position).getConversation());
-//		this.startActivity(intent);
+	    ((ListMsgActivity)getActivity()).onObjectChoosen(data.get(position));
 	}
 
 	/*
@@ -146,10 +164,8 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		handlerUpdate.sendEmptyMessage(HANDLER_START_PROGRESS);	
 		
 		ArrayList<String> args = new ArrayList<String>();
-//		args.add(myUser.getIdGoogle());
-//		args.add(myUser.getPassphrase());
-		args.add("100423822029379370732");
-		args.add("2dRCNORjxsBpcpXi6j57gaRZdWRXV9tF");
+		args.add(myUser.getIdGoogle());
+		args.add(myUser.getPassphrase());
 
 		try {
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "getMessages", args);

@@ -1,10 +1,5 @@
 package com.messengo.tablette.adapter;
 
-import java.util.ArrayList;
-
-import com.messengo.tablette.activity.R;
-import com.messengo.tablette.bean.Message;
-
 import android.accounts.Account;
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.messengo.tablette.activity.R;
 
 public class AccountsAdapter extends BaseAdapter{
 
@@ -42,6 +39,9 @@ public class AccountsAdapter extends BaseAdapter{
 
 	public View getView(int position, View convertView, ViewGroup parent) {
 		convertView = inflater.inflate(R.layout.cell_email, null);
+		if (position >= data.length)
+			return convertView;
+		
 		TextView email = (TextView)convertView.findViewById(R.id.textViewEmail);
 		email.setText(data[position].name);
 		return convertView;

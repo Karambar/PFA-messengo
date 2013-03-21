@@ -4,38 +4,30 @@ package com.messengo.tablette.activity;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.messengo.tablette.adapter.AccountsAdapter;
-import com.messengo.tablette.bean.User;
-import com.messengo.tablette.webservice.AuthService;
-import com.messengo.tablette.webservice.WebService;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import com.messengo.tablette.adapter.AccountsAdapter;
+import com.messengo.tablette.bean.User;
+import com.messengo.tablette.webservice.AuthService;
+import com.messengo.tablette.webservice.WebService;
 
 public class LoginActivity extends Activity implements OnClickListener, OnItemClickListener, Runnable {
 
@@ -59,6 +51,8 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	public static final String PREF_USER = "userMail";
 	public static final int		PREF_ALREADY_LOGIN = 1;
 	public static final int		PREF_NOT_LOGIN = 0;
+	
+	private ImageView		previewsVisibleTick;
 	
 	private ProgressDialog dialog;
 	
@@ -91,30 +85,26 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	public void onClick(View v) {
 		if (v.getId() == R.id.buttonLogin){
 			if (gmailAddress != null){
-				new Thread(this).start();	
-				
-				
-				//				GCMRegistrar.checkDevice(this);
-				//				GCMRegistrar.checkManifest(this);
-				//				if (GCMRegistrar.isRegistered(this)) {
-				//					Log.d("info", GCMRegistrar.getRegistrationId(this));
-				//				}
-				//				RegistrationId = GCMRegistrar.getRegistrationId(this);
-				//				if (RegistrationId.equals("")) {
-				//					GCMRegistrar.register(this, "245096161427");
-				//					Log.d("info", GCMRegistrar.getRegistrationId(this));
-				//					RegistrationId = GCMRegistrar.getRegistrationId(this);
-				//				} else {
-				//					Log.d("info", "already registered as" + RegistrationId);
-				//				}
+				new Thread(this).start();
+			}else{
+				Toast.makeText(this, "Veulliez selectionner une addresse", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
 
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		ImageView tick = (ImageView)view.findViewById(R.id.imageViewTick);
-		tick.setVisibility(View.VISIBLE);
-		gmailAddress = allAccounts[position];
+		if (tick.isShown()){
+			tick.setVisibility(View.GONE);
+			gmailAddress = null;
+		}else{
+			if (previewsVisibleTick != null){
+				previewsVisibleTick.setVisibility(View.GONE);
+			}
+			tick.setVisibility(View.VISIBLE);
+			gmailAddress = allAccounts[position];
+			previewsVisibleTick = tick;
+		}
 	}
 
 	/**

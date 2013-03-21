@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.messengo.tablette.activity.R;
-import com.messengo.tablette.bean.Conversation;
 import com.messengo.tablette.bean.Message;
 
 public class MsgDetailAdapter extends BaseAdapter{
@@ -47,6 +46,9 @@ public class MsgDetailAdapter extends BaseAdapter{
 
 	public View getView(int position, View convertView, ViewGroup parent) {
 		convertView = inflater.inflate(R.layout.cell_msgdetail, null);
+		if (position >= data.size())
+			return convertView;
+		
 		TextView msg = (TextView)convertView.findViewById(R.id.textViewMsg);
 		msg.setText(data.get(position).getMsg());
 		if (data.get(position).isMine()){

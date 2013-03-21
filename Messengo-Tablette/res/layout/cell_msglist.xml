@@ -13,12 +13,12 @@
         android:orientation="horizontal"
         android:paddingBottom="5dip"
         android:paddingTop="5dip" >
-
+
         <ImageView
             android:id="@+id/imageViewReciver"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_launcher" />
+            android:src="@drawable/unkonown_contact" />
 
         <LinearLayout
             android:id="@+id/layoutInfoConversation"

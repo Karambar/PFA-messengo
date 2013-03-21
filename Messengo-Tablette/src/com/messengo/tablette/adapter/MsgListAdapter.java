@@ -2,15 +2,15 @@ package com.messengo.tablette.adapter;
 
 import java.util.ArrayList;
 
-import com.messengo.tablette.activity.R;
-import com.messengo.tablette.bean.Conversation;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.messengo.tablette.activity.R;
+import com.messengo.tablette.bean.Conversation;
 
 public class MsgListAdapter extends BaseAdapter{
 
@@ -42,6 +42,8 @@ public class MsgListAdapter extends BaseAdapter{
 
 	public View getView(int position, View convertView, ViewGroup parent) {
 		convertView = inflater.inflate(R.layout.cell_msglist, null);
+		if (position >= data.size())
+			return convertView;
 		TextView reciever = (TextView)convertView.findViewById(R.id.textViewReciver);
 		reciever.setText(data.get(position).getUserName());
 
