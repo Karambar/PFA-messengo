@@ -9,9 +9,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -60,6 +62,11 @@ public class GCMIntentService extends GCMBaseIntentService {
 				sms.sendTextMessage(number, null, msg, pi, null); 
 				ConnectionManager cnt = new ConnectionManager(context);
 				cnt.sendSms(msg, number);
+				ContentValues values = new ContentValues();
+				values.put("address", number);
+				values.put("body", msg); 
+				getApplicationContext().getContentResolver().insert(Uri.parse("content://sms/sent"), values);
+
 			} catch (JSONException e) {
 				Log.d("MESSENGO", e.getMessage());
 				e.printStackTrace();
