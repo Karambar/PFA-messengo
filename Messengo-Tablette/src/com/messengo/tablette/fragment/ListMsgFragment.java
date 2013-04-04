@@ -12,8 +12,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -55,16 +55,23 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 	private static final int HANDLER_START_PROGRESS = 1;
 	private static final int HANDLER_STOP_PROGRESS_SUCCESS = 2;
 	private static final int HANDLER_STOP_PROGRESS_ERROR_NETWORK = 3;
-
+	private static final int HANDLER_STOP_PROGRESS_ERROR_BAD_IDENTIFIANTS = 4;
+	
 	private ProgressDialog dialog;
+	
+
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
 		View mainView = inflater.inflate(R.layout.listmsg_fragment, container, false);		
 	
+		
+		
 		Intent i = getActivity().getIntent();
 		if (i != null)
 			myUser = (User)i.getExtras().getSerializable(ListMsgActivity.INTENT_USER);	
+		
+
 		msgList = (ListView)mainView.findViewById(R.id.listView1);
 		new Thread(this).start();	
 		
@@ -91,6 +98,8 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		ArrayList<Message>	tmpAllMessages = new ArrayList<Message>();
 		Message				tmpMessage;
 
+		Log.i("ServerInformations", response);
+		
 		data.clear();
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
@@ -122,8 +131,11 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 					data.add(tmpConversation);
 				}
 			}else{
-				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
-			}
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_BAD_IDENTIFIANTS);	
+			}	
+		}
+		else{
+			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 		}
 	}
 	
@@ -155,7 +167,8 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 				dialog.cancel();		
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
 				Toast.makeText(getActivity(), "Nous n'avons pu recuperer vos messages.", Toast.LENGTH_SHORT).show();
-			}
+			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_BAD_IDENTIFIANTS)
+				Toast.makeText(getActivity(), "Vos identifiants Google sont erronnés, veuillez réhessayer", Toast.LENGTH_SHORT).show();
 			super.handleMessage(msg);	
 		}
 	};
@@ -166,6 +179,9 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		ArrayList<String> args = new ArrayList<String>();
 		args.add(myUser.getIdGoogle());
 		args.add(myUser.getPassphrase());
+		
+	//	args.add("114924336724028319172");
+	//	args.add("tlKHAnfHxSXDevXxQ9eXM0RKGgwcKlr2");
 
 		try {
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "getMessages", args);

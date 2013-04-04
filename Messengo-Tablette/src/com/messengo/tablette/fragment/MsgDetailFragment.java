@@ -3,30 +3,39 @@ package com.messengo.tablette.fragment;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import com.messengo.tablette.activity.ListMsgActivity;
 import com.messengo.tablette.activity.R;
 import com.messengo.tablette.adapter.MsgDetailAdapter;
+import com.messengo.tablette.bean.Contact;
 import com.messengo.tablette.bean.Conversation;
 import com.messengo.tablette.bean.Message;
 import com.messengo.tablette.bean.User;
+import com.messengo.tablette.util.CommonUtilities;
 import com.messengo.tablette.util.Configuration;
 import com.messengo.tablette.webservice.WebService;
 
@@ -48,8 +57,19 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 	private static final int 		HANDLER_START_PROGRESS = 1;
 	private static final int 		HANDLER_STOP_PROGRESS_SUCCESS = 2;
 	private static final int 		HANDLER_STOP_PROGRESS_ERROR_NETWORK = 3;
+	private static final int		HANDLER_STOP_PROGRESS_ERROR_TRANSMISSION = 4;
+
 	
 	private User					myUser = null;
+	
+	private AutoCompleteTextView 	ContactView;
+	private ArrayAdapter			contactAdapter;
+	private List<Contact>			contactList;
+	
+	
+	
+	private ArrayList<Map<String, String>> mPeopleList;
+	private SimpleAdapter mAdapter;
 	
 /*
  * Flag Type of view
@@ -74,7 +94,8 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
         msgLayout = (LinearLayout)mainView.findViewById(R.id.LayoutDetailMessage);
         layoutAddContact = (LinearLayout)mainView.findViewById(R.id.LinearLayoutContacts);
         
-        
+        ContactView = (AutoCompleteTextView)mainView.findViewById(R.id.autoCompleteContact);
+
         
         if ((data == null || data.isEmpty()) && typeOfView == Configuration.STATVIEW_EMPTY_CONVERSATION){
 			msgLayoutEmpty.setVisibility(View.VISIBLE);
@@ -92,9 +113,20 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
         msgList = (ListView)mainView.findViewById(R.id.listViewMsgDetail);
         msgList.setAdapter(msgAdapter);
         send.setOnClickListener(this);
+       
+        
+
+        
+        
+        
+        
+        contactList = CommonUtilities.getContactArray(getActivity());
+        contactAdapter = new ArrayAdapter<Contact>(getActivity(), android.R.layout.simple_dropdown_item_1line, contactList);
+        ContactView.setAdapter(contactAdapter);
+
 		return mainView;
 	}
-
+	
 	public void onClick(View v) {
 		if (v.getId() == R.id.buttonSend){
 			new Thread(this).start();
@@ -158,7 +190,9 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 				updateStatView();
 				dialog.cancel();		
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
-				Toast.makeText(getActivity(), "Nous n'avons pu envoyer votre message.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(getActivity(), "Nous ne pouvons communiquer avec le serveur", Toast.LENGTH_SHORT).show();
+			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_TRANSMISSION){
+				Toast.makeText(getActivity(), "Nous n'avons pu envoyer votre message. Veuillez rehessayer", Toast.LENGTH_SHORT).show();
 			}
 			super.handleMessage(msg);	
 		}
@@ -172,24 +206,55 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 			ArrayList<String> args = new ArrayList<String>();
 			args.add(myUser.getIdGoogle());
 			args.add(myUser.getPassphrase());			
+		//	args.add("114924336724028319172");
+		//	args.add("tlKHAnfHxSXDevXxQ9eXM0RKGgwcKlr2");
+			
 			args.add("0");
 			if (typeOfView == Configuration.STATVIEW_NEWMESSAGE){
-				args.add(contactArea.getText().toString());
+				String number = "";
+				if (( number = CommonUtilities.getPhonenUmberFromContactList(ContactView.getText().toString(), contactList)) != null)
+					args.add(number);
+				else
+					args.add(ContactView.getText().toString());
 			}else{
-				args.add(conversation.getUserTel());				
+				args.add(conversation.getUserTel());
 			}
 			args.add(URLEncoder.encode(msg));
 			try {
-				String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "addMessage", args);
-				Message ms = new Message();
-				ms.setDate("test");
-				ms.setMine(true);
-				ms.setMsg(msg);
-				data.add(ms);
+				String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "addMessage", args);				
+				try {
+					parseResponse(response);
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_SUCCESS);				
+		}
+	}
+	
+	private void parseResponse(String response) throws JSONException {
+		Log.i("ServerInformations", response);
+		
+		int					i = -1, j = -1;
+		Conversation 		tmpConversation;
+		ArrayList<Message>	tmpAllMessages = new ArrayList<Message>();
+		Message				tmpMessage;
+
+		
+		data.clear();
+		if (response != null){
+			JSONObject objectCreated = new JSONObject(response);
+			JSONObject responseObject = objectCreated.optJSONObject("response");			
+			if (responseObject != null 
+					&& Integer.valueOf(responseObject.optString("code")) == 200){
+				
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_SUCCESS);	
+			}else{
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_TRANSMISSION);	
+			}	
+		}else{
+			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 		}
 	}
 

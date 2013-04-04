@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -48,7 +49,10 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	
 	public static final String PREF_NAME = "login";
 	public static final String PREF_STAT = "loginStat";
-	public static final String PREF_USER = "userMail";
+	public static final String PREF_USER_EMAIL = "userMail";
+	public static final String PREF_USER_IDGOOGLE = "userID";
+	public static final String PREF_USER_PASSPHRASE = "userPassphrase";
+	
 	public static final int		PREF_ALREADY_LOGIN = 1;
 	public static final int		PREF_NOT_LOGIN = 0;
 	
@@ -62,22 +66,13 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-        
-//        final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-//        if (settings.getInt(PREF_STAT, -1) == 1){
-//    		String email = settings.getString(PREF_USER, "");
-//        	
-//        }
-
+        setContentView(R.layout.activity_login);        
         googleAccountManager = AccountManager.get(this);
-        allAccounts = googleAccountManager.getAccountsByType("com.google");
-        
+        allAccounts = googleAccountManager.getAccountsByType("com.google");  
         gmailAccounts = (ListView)findViewById(R.id.listViewGoogleAccount);
         accountsAdapter = new AccountsAdapter(this, allAccounts);
         gmailAccounts.setAdapter(accountsAdapter);
-        gmailAccounts.setOnItemClickListener(this);
-        
+        gmailAccounts.setOnItemClickListener(this);  
 		btnSend = (Button)findViewById(R.id.buttonLogin);
 		btnSend.setOnClickListener(this);
 	}
@@ -144,12 +139,15 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 				final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
 				final SharedPreferences.Editor editor = settings.edit();
 				editor.putInt(PREF_STAT, PREF_ALREADY_LOGIN);
-				editor.putString(PREF_USER, myUser.geteMail());
+				editor.putString(PREF_USER_EMAIL, myUser.geteMail());
+				editor.putString(PREF_USER_IDGOOGLE, myUser.getIdGoogle());
+				editor.putString(PREF_USER_PASSPHRASE, myUser.getPassphrase());
 				editor.commit();				
 				//Start new Activity
 				Intent i = new Intent(LoginActivity.this, ListMsgActivity.class);
 				i.putExtra(ListMsgActivity.INTENT_USER, myUser);
-				LoginActivity.this.startActivity(i);	
+				LoginActivity.this.finish();
+				LoginActivity.this.startActivity(i);
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
 				Toast.makeText(LoginActivity.this, "Le serveur est innaccessible, veuillez essayer ulterieurement", Toast.LENGTH_SHORT).show();
 				dialog.cancel();
@@ -160,14 +158,13 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 
 	public void run() {
 		handlerUpdate.sendEmptyMessage(HANDLER_START_PROGRESS);
-		
 		AuthService.getInstance().refreshAuthToken(this, gmailAddress);
 		
 		final SharedPreferences settings = this.getSharedPreferences(AuthService.PREF_NAME, 0);
 		String accessToken = settings.getString(AuthService.PREF_TOKEN, "");	
 		ArrayList<String> args = new ArrayList<String>();
 		args.add(accessToken);
-
+		args.add(gmailAddress.name);
 		try {
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "connection", args);
 			parseConnection(response);
@@ -179,9 +176,11 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 			e.printStackTrace();
 		}
 	}
+	private static final String TAG = "WebService";
 
 	private void parseConnection(String response) throws JSONException {
-
+		
+		Log.i(TAG, response);
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
 			JSONObject responseObject = objectCreated.optJSONObject("response");			
@@ -203,6 +202,8 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 				myUser.setShortName(infoObject.getString("shortName"));
 				myUser.setPassphrase(infoObject.getString("passphrase"));
 				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_SUCCESS);				
+			}else{
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);
 			}
 		}else{
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	

@@ -1,32 +1,47 @@
 package com.messengo.tablette.activity;
 
 
-import java.util.ArrayList;
-
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.messengo.tablette.bean.Conversation;
-import com.messengo.tablette.bean.Message;
 import com.messengo.tablette.fragment.ListMsgFragment;
 import com.messengo.tablette.fragment.MsgDetailFragment;
+import com.messengo.tablette.gcm.ConnectionManager;
 import com.messengo.tablette.util.Configuration;
+import com.messengo.tablette.webservice.AuthService;
 
 public class ListMsgActivity extends FragmentActivity {
 
 	public final static String		INTENT_DATA = "data";
 	public final static String		INTENT_USER = "user";
 		
+	private ConnectionManager cntMgr;
+
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
 	 	setContentView(R.layout.listmsg_activity);
+	 
+	 	final SharedPreferences settings = this.getSharedPreferences(AuthService.PREF_NAME, 0);
+		String accessToken = settings.getString(AuthService.PREF_TOKEN, "");	
+	
+		cntMgr = new ConnectionManager(this);
+		cntMgr.registerGCM();
+		cntMgr.connectToWS(accessToken);
 	}
 
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		super.onResume();
+	}
+	
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    getMenuInflater().inflate(R.menu.actionbar_listmsg, menu);
@@ -47,6 +62,15 @@ public class ListMsgActivity extends FragmentActivity {
 			return true;
 		case R.id.menu_newmsg:
 			onNewConversation();
+			return true;
+		case R.id.menu_deco:
+			final SharedPreferences settings = getSharedPreferences(LoginActivity.PREF_NAME, 0);
+			final SharedPreferences.Editor editor = settings.edit();
+			editor.putInt(LoginActivity.PREF_STAT, LoginActivity.PREF_NOT_LOGIN);
+			editor.commit();
+			Intent i = new Intent(this, LoginActivity.class);
+			this.finish();
+			this.startActivity(i);
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -94,4 +118,12 @@ public class ListMsgActivity extends FragmentActivity {
 	        viewer.updateMessageDetails(Obj);
 	    }
 	}
+	
+	
+	
+	
+		
+	
+	
+	
 }
