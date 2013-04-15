@@ -92,6 +92,11 @@ public class ConnectionManager {
 			HttpClient client = new DefaultHttpClient();
 			HttpGet get = new HttpGet();
 			try {
+				if (params[0].equals("")) {
+					Log.d("MESSENGO", "Do in backgrd empty token");
+				}
+				else 
+					Log.d("MESSENGO", "token not empty");
 				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/"));
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();

@@ -23,16 +23,18 @@ public class AuthService {
 	private final static String SCOPE = OAUTH_SCOPE + USERINFO_SCOPE;
 
 	private static AuthService instance;
-
-	public static synchronized AuthService getInstance(){
+	private ICallback callback;
+	
+	public static synchronized AuthService getInstance(ICallback callback){
 		if (instance == null)
 		{
-			instance = new AuthService();
+			instance = new AuthService(callback);
 		}
 		return instance;
 	}
 
-	private AuthService() {
+	private AuthService(ICallback callback) {
+		this.callback = callback;
 	}
 
 	public void refreshAuthToken(final Activity activity, final Account account) {
@@ -49,6 +51,8 @@ public class AuthService {
 					if (accountName != null && authToken != null) {
 						final SharedPreferences.Editor editor = settings.edit();
 						editor.putString(PREF_TOKEN, authToken);
+						Log.d("MESSENGO", "commiting token [" + authToken + "]");
+						callback.tokenCallback(authToken);
 						editor.commit();
 					} else if (authIntent != null) {
 						activity.startActivity(authIntent);

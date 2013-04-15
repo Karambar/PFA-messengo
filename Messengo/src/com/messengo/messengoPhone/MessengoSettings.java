@@ -23,7 +23,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 
-public class MessengoSettings extends PreferenceActivity {
+public class MessengoSettings extends PreferenceActivity implements ICallback {
 
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
 	public static String regId;
@@ -47,12 +47,7 @@ public class MessengoSettings extends PreferenceActivity {
 
 		gmailAddress = allAccounts[0];
 
-		AuthService.getInstance().refreshAuthToken(this, gmailAddress);
-		settings = getSharedPreferences(AuthService.PREF_NAME, 0);
-		editor = settings.edit();
-		String accessToken = settings.getString(AuthService.PREF_TOKEN, "");    
-
-		cntMgr.connectToWS(accessToken);
+		AuthService.getInstance(this).refreshAuthToken(this, gmailAddress);
 	}
 
 
@@ -184,6 +179,18 @@ public class MessengoSettings extends PreferenceActivity {
 				PreferenceManager
 				.getDefaultSharedPreferences(preference.getContext())
 				.getString(preference.getKey(), ""));
+	}
+
+
+
+	@Override
+	public void tokenCallback(String token) {	
+		settings = getSharedPreferences(AuthService.PREF_NAME, 0);
+		editor = settings.edit();
+		String accessToken = token;   
+		if (token.equals(""))
+			Log.d("MESSENGO", "AccessToken empty");
+		cntMgr.connectToWS(token);
 	}
 
 
