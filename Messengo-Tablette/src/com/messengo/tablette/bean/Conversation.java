@@ -12,7 +12,19 @@ public class Conversation implements Serializable {
 
 	private Integer				userId;
 	private String				userName;
+	private String				userTel;
 	private ArrayList<Message>	conversation;
+	
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Conversation [userId=" + userId + ", userName=" + userName
+				+ ", userTel=" + userTel + ", conversation=" + conversation
+				+ "]";
+	}
 	/**
 	 * @return the userId
 	 */
@@ -48,6 +60,18 @@ public class Conversation implements Serializable {
 	 */
 	public void setConversation(ArrayList<Message> conversation) {
 		this.conversation = conversation;
+	}
+	/**
+	 * @return the userTel
+	 */
+	public String getUserTel() {
+		return userTel;
+	}
+	/**
+	 * @param userTel the userTel to set
+	 */
+	public void setUserTel(String userTel) {
+		this.userTel = userTel;
 	}
 
 

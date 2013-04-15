@@ -1,0 +1,34 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/menu_refresh"
+        android:icon="@drawable/ic_action_refresh"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_refresh"/>
+    <item
+        android:id="@+id/menu_newmsg"
+        android:icon="@drawable/btn_new_msg"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_newmsg"/>
+ 	<item
+        android:id="@+id/menu_deco"
+        android:icon="@drawable/power_off"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_deco"/>
+ 
+    <item
+        android:id="@+id/menu_help"
+        android:icon="@drawable/ic_action_help"
+        android:showAsAction="never"
+        android:title="@string/menu_help"/>
+    <item
+        android:id="@+id/menu_about"
+        android:icon="@drawable/ic_action_about"
+        android:showAsAction="never"
+        android:title="@string/menu_about"/>
+    <item
+        android:id="@+id/menu_settings"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never"
+        android:title="@string/menu_settings"/>
+
+</menu>

@@ -103,6 +103,7 @@ public class ConnectionManager {
 				String content = ConvertToString.convertStreamToString(entity.getContent());
 				JSONObject obj = new JSONObject(content);
 				JSONObject obj2 = obj.getJSONObject("response");
+				Log.i("Messengo", content);
 				if (!(obj2.getString("code").equals("200"))) {
 					broken = true;
 					return null;

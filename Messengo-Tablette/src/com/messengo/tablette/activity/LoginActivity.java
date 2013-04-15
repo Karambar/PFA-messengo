@@ -4,38 +4,31 @@ package com.messengo.tablette.activity;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.messengo.tablette.adapter.AccountsAdapter;
-import com.messengo.tablette.bean.User;
-import com.messengo.tablette.webservice.AuthService;
-import com.messengo.tablette.webservice.WebService;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.accounts.AccountManagerCallback;
-import android.accounts.AccountManagerFuture;
-import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import com.messengo.tablette.adapter.AccountsAdapter;
+import com.messengo.tablette.bean.User;
+import com.messengo.tablette.webservice.AuthService;
+import com.messengo.tablette.webservice.WebService;
 
 public class LoginActivity extends Activity implements OnClickListener, OnItemClickListener, Runnable {
 
@@ -53,12 +46,18 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	private static final int HANDLER_START_PROGRESS = 1;
 	private static final int HANDLER_STOP_PROGRESS_SUCCESS = 2;
 	private static final int HANDLER_STOP_PROGRESS_ERROR_NETWORK = 3;
+	private static final int HANDLER_STOP_PROGRESS_ERROR_IDENTIFY = 4;
 	
 	public static final String PREF_NAME = "login";
 	public static final String PREF_STAT = "loginStat";
-	public static final String PREF_USER = "userMail";
+	public static final String PREF_USER_EMAIL = "userMail";
+	public static final String PREF_USER_IDGOOGLE = "userID";
+	public static final String PREF_USER_PASSPHRASE = "userPassphrase";
+	
 	public static final int		PREF_ALREADY_LOGIN = 1;
 	public static final int		PREF_NOT_LOGIN = 0;
+	
+	private ImageView		previewsVisibleTick;
 	
 	private ProgressDialog dialog;
 	
@@ -68,22 +67,13 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-        
-//        final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
-//        if (settings.getInt(PREF_STAT, -1) == 1){
-//    		String email = settings.getString(PREF_USER, "");
-//        	
-//        }
-
+        setContentView(R.layout.activity_login);        
         googleAccountManager = AccountManager.get(this);
-        allAccounts = googleAccountManager.getAccountsByType("com.google");
-        
+        allAccounts = googleAccountManager.getAccountsByType("com.google");  
         gmailAccounts = (ListView)findViewById(R.id.listViewGoogleAccount);
         accountsAdapter = new AccountsAdapter(this, allAccounts);
         gmailAccounts.setAdapter(accountsAdapter);
-        gmailAccounts.setOnItemClickListener(this);
-        
+        gmailAccounts.setOnItemClickListener(this);  
 		btnSend = (Button)findViewById(R.id.buttonLogin);
 		btnSend.setOnClickListener(this);
 	}
@@ -91,30 +81,26 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	public void onClick(View v) {
 		if (v.getId() == R.id.buttonLogin){
 			if (gmailAddress != null){
-				new Thread(this).start();	
-				
-				
-				//				GCMRegistrar.checkDevice(this);
-				//				GCMRegistrar.checkManifest(this);
-				//				if (GCMRegistrar.isRegistered(this)) {
-				//					Log.d("info", GCMRegistrar.getRegistrationId(this));
-				//				}
-				//				RegistrationId = GCMRegistrar.getRegistrationId(this);
-				//				if (RegistrationId.equals("")) {
-				//					GCMRegistrar.register(this, "245096161427");
-				//					Log.d("info", GCMRegistrar.getRegistrationId(this));
-				//					RegistrationId = GCMRegistrar.getRegistrationId(this);
-				//				} else {
-				//					Log.d("info", "already registered as" + RegistrationId);
-				//				}
+				new Thread(this).start();
+			}else{
+				Toast.makeText(this, "Veulliez selectionner une addresse", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
 
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 		ImageView tick = (ImageView)view.findViewById(R.id.imageViewTick);
-		tick.setVisibility(View.VISIBLE);
-		gmailAddress = allAccounts[position];
+		if (tick.isShown()){
+			tick.setVisibility(View.GONE);
+			gmailAddress = null;
+		}else{
+			if (previewsVisibleTick != null){
+				previewsVisibleTick.setVisibility(View.GONE);
+			}
+			tick.setVisibility(View.VISIBLE);
+			gmailAddress = allAccounts[position];
+			previewsVisibleTick = tick;
+		}
 	}
 
 	/**
@@ -154,15 +140,21 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 				final SharedPreferences settings = getSharedPreferences(PREF_NAME, 0);
 				final SharedPreferences.Editor editor = settings.edit();
 				editor.putInt(PREF_STAT, PREF_ALREADY_LOGIN);
-				editor.putString(PREF_USER, myUser.geteMail());
+				editor.putString(PREF_USER_EMAIL, myUser.geteMail());
+				editor.putString(PREF_USER_IDGOOGLE, myUser.getIdGoogle());
+				editor.putString(PREF_USER_PASSPHRASE, myUser.getPassphrase());
 				editor.commit();				
 				//Start new Activity
 				Intent i = new Intent(LoginActivity.this, ListMsgActivity.class);
 				i.putExtra(ListMsgActivity.INTENT_USER, myUser);
-				LoginActivity.this.startActivity(i);	
+				LoginActivity.this.finish();
+				LoginActivity.this.startActivity(i);
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
 				Toast.makeText(LoginActivity.this, "Le serveur est innaccessible, veuillez essayer ulterieurement", Toast.LENGTH_SHORT).show();
 				dialog.cancel();
+			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_IDENTIFY){
+				Toast.makeText(LoginActivity.this, "Les identifiants transmis au serveur sont erronés, veuillew rehesayer", Toast.LENGTH_SHORT).show();
+				dialog.cancel();		
 			}
 			super.handleMessage(msg);
 		}
@@ -170,41 +162,47 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 
 	public void run() {
 		handlerUpdate.sendEmptyMessage(HANDLER_START_PROGRESS);
-		
 		AuthService.getInstance().refreshAuthToken(this, gmailAddress);
 		
 		final SharedPreferences settings = this.getSharedPreferences(AuthService.PREF_NAME, 0);
 		String accessToken = settings.getString(AuthService.PREF_TOKEN, "");	
 		ArrayList<String> args = new ArrayList<String>();
 		args.add(accessToken);
-
+		args.add(gmailAddress.name);
 		try {
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "connection", args);
 			parseConnection(response);
 		} catch (IOException e) {
+			Log.i("WebService", "IOExxecption !!");
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 			e.printStackTrace();
 		} catch (JSONException e) {
+			Log.i("WebService", "JSON Error !!");
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 			e.printStackTrace();
 		}
 	}
+	private static final String TAG = "WebService";
 
 	private void parseConnection(String response) throws JSONException {
-
+		
+		Log.i(TAG, response);
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
+			Log.i(TAG, "JSONObject created");
 			JSONObject responseObject = objectCreated.optJSONObject("response");			
+			Log.i(TAG, "ResponseObjectCreated");
 			if (responseObject != null 
 					&& Integer.valueOf(responseObject.optString("code")) == 200){
-				
+				Log.i(TAG, "Start get UserInformations");	
 				JSONObject infoObject = objectCreated.getJSONObject("infos");
+				Log.i(TAG, "Get USer info");	
 				myUser = new User();
 				myUser.setBirthday(infoObject.getString("birthday"));
 				myUser.seteMail(infoObject.getString("email"));
 				myUser.setIdGoogle(infoObject.getString("idGoogle"));
 				myUser.setLocale(infoObject.getString("locale"));
-				if (infoObject.getString("isMale").equals("1"))
+				if (infoObject.getString("idMale").equals("1"))
 					myUser.setMale(true);
 				else
 					myUser.setMale(false);
@@ -212,7 +210,10 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 				myUser.setPicture(infoObject.getString("picture"));
 				myUser.setShortName(infoObject.getString("shortName"));
 				myUser.setPassphrase(infoObject.getString("passphrase"));
+				Log.i(TAG, "End get UserInformations");	
 				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_SUCCESS);				
+			}else{
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_IDENTIFY);
 			}
 		}else{
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	

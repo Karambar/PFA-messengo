@@ -17,13 +17,21 @@ public final class CommonUtilities {
 
 
 	public static String getEmail(Context context) {
-		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-		Account[] accounts = AccountManager.get(context).getAccounts();
-		for (Account account : accounts) {
-			if (emailPattern.matcher(account.name).matches()) {
-				return account.name;
-			}
-		}
-		return null;
+//		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
+//		Account[] accounts = AccountManager.get(context).getAccounts();
+//		for (Account account : accounts) {
+//			if (emailPattern.matcher(account.name).matches()) {
+//				return account.name;
+//			}
+//		}
+		  AccountManager	googleAccountManager;
+		  Account[] 		allAccounts;
+
+
+		  googleAccountManager = AccountManager.get(context);
+	      allAccounts = googleAccountManager.getAccountsByType("com.google");  
+	      
+		
+	      return allAccounts[0].name;
 	}
 }
