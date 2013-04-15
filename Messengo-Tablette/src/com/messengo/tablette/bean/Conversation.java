@@ -14,6 +14,17 @@ public class Conversation implements Serializable {
 	private String				userName;
 	private String				userTel;
 	private ArrayList<Message>	conversation;
+	
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Conversation [userId=" + userId + ", userName=" + userName
+				+ ", userTel=" + userTel + ", conversation=" + conversation
+				+ "]";
+	}
 	/**
 	 * @return the userId
 	 */

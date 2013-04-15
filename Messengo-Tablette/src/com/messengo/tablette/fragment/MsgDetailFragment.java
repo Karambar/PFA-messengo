@@ -117,8 +117,7 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
         
 
         
-        
-        
+  
         
         contactList = CommonUtilities.getContactArray(getActivity());
         contactAdapter = new ArrayAdapter<Contact>(getActivity(), android.R.layout.simple_dropdown_item_1line, contactList);
@@ -191,14 +190,15 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 				dialog.cancel();		
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
 				Toast.makeText(getActivity(), "Nous ne pouvons communiquer avec le serveur", Toast.LENGTH_SHORT).show();
+				dialog.cancel();		
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_TRANSMISSION){
 				Toast.makeText(getActivity(), "Nous n'avons pu envoyer votre message. Veuillez rehessayer", Toast.LENGTH_SHORT).show();
+				dialog.cancel();		
 			}
 			super.handleMessage(msg);	
 		}
 	};
 	
-	@SuppressWarnings({ "deprecation", "unused" })
 	public void run() {
 		String msg = msgArea.getText().toString();
 		if (msg != null && !msg.isEmpty() && myUser != null){
@@ -206,9 +206,6 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 			ArrayList<String> args = new ArrayList<String>();
 			args.add(myUser.getIdGoogle());
 			args.add(myUser.getPassphrase());			
-		//	args.add("114924336724028319172");
-		//	args.add("tlKHAnfHxSXDevXxQ9eXM0RKGgwcKlr2");
-			
 			args.add("0");
 			if (typeOfView == Configuration.STATVIEW_NEWMESSAGE){
 				String number = "";
@@ -234,15 +231,7 @@ public class MsgDetailFragment extends Fragment implements OnClickListener, Runn
 	}
 	
 	private void parseResponse(String response) throws JSONException {
-		Log.i("ServerInformations", response);
-		
-		int					i = -1, j = -1;
-		Conversation 		tmpConversation;
-		ArrayList<Message>	tmpAllMessages = new ArrayList<Message>();
-		Message				tmpMessage;
-
-		
-		data.clear();
+		Log.i("ServerInformations", response);		
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
 			JSONObject responseObject = objectCreated.optJSONObject("response");			

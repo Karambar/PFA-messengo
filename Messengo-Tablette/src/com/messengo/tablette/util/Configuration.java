@@ -12,7 +12,7 @@ public class Configuration {
  */
 	public static final String	FLAG_MSG_TYPE_OF_VIEW = "viewType";
 	public static final String 	INTENT_USER = "user";
-	
+	public static final String 	INTENT_CORRESPONDANT_ID = "correspondantId";
 
 	
 }

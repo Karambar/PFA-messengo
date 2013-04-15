@@ -94,7 +94,7 @@ public class ConnectionManager {
 			HttpClient client = new DefaultHttpClient();
 			HttpGet get = new HttpGet();
 			try {
-				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/"));
+				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/" + email + "/"));
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				String content = StringUtil.convertStreamToString(entity.getContent());

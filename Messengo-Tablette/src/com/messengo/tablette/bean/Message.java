@@ -13,7 +13,19 @@ public class Message implements Serializable {
 	private String	msg;
 	private String	date;
 	private Integer	id;
+	private Integer	stat;
 	
+	public static final Integer SENDING = 0;
+	public static final Integer SENDED = 1;
+	public static final Integer SEND_EROOR = 2;
+	
+	public Message(){
+		stat = SENDED;
+		mine = true;
+		msg = "";
+		date = "";
+		id = -1;
+	}
 	
 	
 	/* (non-Javadoc)
@@ -110,5 +122,17 @@ public class Message implements Serializable {
 	 */
 	public void setId(Integer id) {
 		this.id = id;
+	}
+	/**
+	 * @return the stat
+	 */
+	public Integer getStat() {
+		return stat;
+	}
+	/**
+	 * @param stat the stat to set
+	 */
+	public void setStat(Integer stat) {
+		this.stat = stat;
 	}
 }

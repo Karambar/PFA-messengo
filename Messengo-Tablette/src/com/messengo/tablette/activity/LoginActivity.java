@@ -46,6 +46,7 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 	private static final int HANDLER_START_PROGRESS = 1;
 	private static final int HANDLER_STOP_PROGRESS_SUCCESS = 2;
 	private static final int HANDLER_STOP_PROGRESS_ERROR_NETWORK = 3;
+	private static final int HANDLER_STOP_PROGRESS_ERROR_IDENTIFY = 4;
 	
 	public static final String PREF_NAME = "login";
 	public static final String PREF_STAT = "loginStat";
@@ -151,6 +152,9 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_NETWORK){
 				Toast.makeText(LoginActivity.this, "Le serveur est innaccessible, veuillez essayer ulterieurement", Toast.LENGTH_SHORT).show();
 				dialog.cancel();
+			}else if (msg.what == HANDLER_STOP_PROGRESS_ERROR_IDENTIFY){
+				Toast.makeText(LoginActivity.this, "Les identifiants transmis au serveur sont erronés, veuillew rehesayer", Toast.LENGTH_SHORT).show();
+				dialog.cancel();		
 			}
 			super.handleMessage(msg);
 		}
@@ -169,9 +173,11 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "connection", args);
 			parseConnection(response);
 		} catch (IOException e) {
+			Log.i("WebService", "IOExxecption !!");
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 			e.printStackTrace();
 		} catch (JSONException e) {
+			Log.i("WebService", "JSON Error !!");
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	
 			e.printStackTrace();
 		}
@@ -183,17 +189,20 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 		Log.i(TAG, response);
 		if (response != null){
 			JSONObject objectCreated = new JSONObject(response);
+			Log.i(TAG, "JSONObject created");
 			JSONObject responseObject = objectCreated.optJSONObject("response");			
+			Log.i(TAG, "ResponseObjectCreated");
 			if (responseObject != null 
 					&& Integer.valueOf(responseObject.optString("code")) == 200){
-				
+				Log.i(TAG, "Start get UserInformations");	
 				JSONObject infoObject = objectCreated.getJSONObject("infos");
+				Log.i(TAG, "Get USer info");	
 				myUser = new User();
 				myUser.setBirthday(infoObject.getString("birthday"));
 				myUser.seteMail(infoObject.getString("email"));
 				myUser.setIdGoogle(infoObject.getString("idGoogle"));
 				myUser.setLocale(infoObject.getString("locale"));
-				if (infoObject.getString("isMale").equals("1"))
+				if (infoObject.getString("idMale").equals("1"))
 					myUser.setMale(true);
 				else
 					myUser.setMale(false);
@@ -201,9 +210,10 @@ public class LoginActivity extends Activity implements OnClickListener, OnItemCl
 				myUser.setPicture(infoObject.getString("picture"));
 				myUser.setShortName(infoObject.getString("shortName"));
 				myUser.setPassphrase(infoObject.getString("passphrase"));
+				Log.i(TAG, "End get UserInformations");	
 				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_SUCCESS);				
 			}else{
-				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);
+				handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_IDENTIFY);
 			}
 		}else{
 			handlerUpdate.sendEmptyMessage(HANDLER_STOP_PROGRESS_ERROR_NETWORK);	

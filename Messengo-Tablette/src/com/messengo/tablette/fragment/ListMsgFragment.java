@@ -27,6 +27,10 @@ import com.messengo.tablette.adapter.MsgListAdapter;
 import com.messengo.tablette.bean.Conversation;
 import com.messengo.tablette.bean.Message;
 import com.messengo.tablette.bean.User;
+import com.messengo.tablette.database.MessagesDAO;
+import com.messengo.tablette.services.IUpdateService;
+import com.messengo.tablette.services.IUpdateServiceListener;
+import com.messengo.tablette.services.UpdateService;
 import com.messengo.tablette.webservice.WebService;
 
 public class ListMsgFragment extends Fragment implements OnItemClickListener, Runnable{
@@ -38,6 +42,7 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		
 	private User 					myUser = null;
 
+	
 	/**
 	 * @return the myUser
 	 */
@@ -59,13 +64,16 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 	
 	private ProgressDialog dialog;
 	
-
+	private MessagesDAO dao;
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
 	{
+		
+		
 		View mainView = inflater.inflate(R.layout.listmsg_fragment, container, false);		
 	
-		
+		dao = new MessagesDAO(getActivity());
+		dao.open();
 		
 		Intent i = getActivity().getIntent();
 		if (i != null)
@@ -73,18 +81,36 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		
 
 		msgList = (ListView)mainView.findViewById(R.id.listView1);
-		new Thread(this).start();	
-		
+	
+		IUpdateService upServ = UpdateService.getService();
+		if (upServ != null){
+			upServ.addListener(new IUpdateServiceListener() { 
+			    public void dataChanged(Object o) { 
+			    	  ListMsgFragment.this.getActivity().runOnUiThread(new Runnable() { 
+			              public void run() {
+			            	  Log.i("UpdateServiceMessengo", "Update de l'interface graphique suite à la mise à jour de la bdd");
+			            	  updateListView();
+			              } 
+			    	  });
+			    }
+			});			
+		}else
+      	  Log.i("UpdateServiceMessengo", "pas de connection avec l'interface graphique");
+
+
+		updateListView();
+	//	new Thread(this).start();		
 		return mainView;
 	}
+
 	
-	public void updateMessageList(){
-		new Thread(this).start();
-	}
-	
-	private void updateListView(){
-		if (data.isEmpty() || data == null)
+	public void updateListView(){
+		data.clear();
+		data = dao.getAllMessages();
+		if (data.isEmpty() || data == null){
 			 Toast.makeText(getActivity(), "Vous n'avez aucun messages.", Toast.LENGTH_SHORT).show();
+			 return;
+		}
 		msgAdapter = new MsgListAdapter(getActivity(), data);
 		msgList.setAdapter(msgAdapter);
 		msgList.setOnItemClickListener(this);
@@ -121,10 +147,13 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 						JSONObject aMessage = allMessages.getJSONObject(j);
 						tmpMessage.setDate(aMessage.optString("date_msg"));
 						tmpMessage.setMsg(aMessage.optString("msg"));
+						tmpMessage.setId(Integer.valueOf(aMessage.optString("id_message")));
 						if (aMessage.optString("exp_is_me").equals("0"))
 							tmpMessage.setMine(false);
 						else
 							tmpMessage.setMine(true);
+						
+						dao.createMessage(tmpMessage, tmpConversation.getUserName(), tmpConversation.getUserTel(), String.valueOf(tmpConversation.getUserId()));						
 						tmpAllMessages.add(tmpMessage);
 					}
 					tmpConversation.setConversation(tmpAllMessages);
@@ -179,9 +208,6 @@ public class ListMsgFragment extends Fragment implements OnItemClickListener, Ru
 		ArrayList<String> args = new ArrayList<String>();
 		args.add(myUser.getIdGoogle());
 		args.add(myUser.getPassphrase());
-		
-	//	args.add("114924336724028319172");
-	//	args.add("tlKHAnfHxSXDevXxQ9eXM0RKGgwcKlr2");
 
 		try {
 			String response = WebService.getInstance().downloadUrl("http://messengo.webia-asso.fr/webservice", "getMessages", args);

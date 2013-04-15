@@ -83,7 +83,7 @@ public class ListMsgActivity extends FragmentActivity {
 		  if (viewer == null || !viewer.isInLayout()){
 
 		  }else{
-			  viewer.updateMessageList();
+			  viewer.updateListView();
 		  }
 	}
 	

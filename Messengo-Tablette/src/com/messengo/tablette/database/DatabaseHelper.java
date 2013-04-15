@@ -9,6 +9,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	  public static final String TABLE_MESSAGES = "messages";
 	  public static final String COLUMN_ID = "_id";
 	  public static final String COLUMN_MESSAGE = "message";
+	  public static final String COLUMN_ID_MESSAGE = "idMessage";
 	  public static final String COLUMN_DATE = "date";
 	  public static final String COLUMN_WITH_USER_NAME = "with_username";
 	  public static final String COLUMN_WITH_USER_PHONE = "with_userphone";
@@ -22,7 +23,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	  private static final String DATABASE_CREATE = "create table "
 	      + TABLE_MESSAGES + "(" 
 	      + COLUMN_ID + " integer primary key autoincrement, " 
-	      + COLUMN_MESSAGE + " text not null, " 
+	      + COLUMN_MESSAGE + " text not null, "
+	      + COLUMN_ID_MESSAGE + " text not null, "
 	      + COLUMN_DATE + " text not null, "
 	      + COLUMN_WITH_USER_NAME + " text not null, "
 	      + COLUMN_WITH_USER_PHONE + " text not null, "

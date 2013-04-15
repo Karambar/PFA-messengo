@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.messengo.tablette.bean.User;
+import com.messengo.tablette.services.UpdateService;
 
 public class BeginActivity extends Activity {
 
@@ -13,6 +15,11 @@ public class BeginActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 	
+		Intent intent = new Intent(this, UpdateService.class); 
+		if (this.startService(intent) == null)
+			Log.i("UpdateServiceMessengo", "The service isn't started, pease try again");		
+	
+		
 		final SharedPreferences settings = this.getSharedPreferences(LoginActivity.PREF_NAME, 0);
 		if (settings.getInt(LoginActivity.PREF_STAT, LoginActivity.PREF_NOT_LOGIN) == LoginActivity.PREF_ALREADY_LOGIN)
 		{

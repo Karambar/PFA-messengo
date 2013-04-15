@@ -23,14 +23,9 @@ public final class CommonUtilities {
 
 
 	public static String getEmail(Context context) {
-		Pattern emailPattern = Patterns.EMAIL_ADDRESS; // API level 8+
-		Account[] accounts = AccountManager.get(context).getAccounts();
-		for (Account account : accounts) {
-			if (emailPattern.matcher(account.name).matches()) {
-				return account.name;
-			}
-		}
-		return null;
+		  AccountManager googleAccountManager = AccountManager.get(context);
+		  Account[]  allAccounts = googleAccountManager.getAccountsByType("com.google");		
+	      return allAccounts[0].name;
 	}
 
 

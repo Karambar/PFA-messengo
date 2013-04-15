@@ -48,8 +48,9 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".GCMIntentService" />
+        <service android:name="com.messengo.tablette.gcm.GCMIntentService" />
         <service android:name="com.messengo.tablette.receiver.MessengoService"/>
+        <service android:name="com.messengo.tablette.services.UpdateService" />
     
         <activity
             android:name=".BeginActivity"

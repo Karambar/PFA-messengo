@@ -92,12 +92,14 @@ public class ConnectionManager {
 			HttpClient client = new DefaultHttpClient();
 			HttpGet get = new HttpGet();
 			try {
-				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/"));
+				Log.i("Messengo", "Email = " + email);
+				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/" + ConnectionManager.email + "/"));
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				String content = ConvertToString.convertStreamToString(entity.getContent());
 				JSONObject obj = new JSONObject(content);
 				JSONObject obj2 = obj.getJSONObject("response");
+				Log.i("Messengo", content);
 				if (!(obj2.getString("code").equals("200"))) {
 					broken = true;
 					return null;
