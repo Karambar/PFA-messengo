@@ -30,10 +30,17 @@ public class ConnectionManager {
 	private Context ct;
 	AsyncTask<Void, Void, Void> mRegisterTask;
 	protected static String email;
+	protected ICallback callback;
 
-	public ConnectionManager(Context ct) {
+	public ConnectionManager(Context ct, ICallback callback) {
 		this.ct = ct;
+		this.callback = callback;
 		ConnectionManager.email = CommonUtilities.getEmail(ct);     
+	}
+
+	public ConnectionManager(Context context) {
+		this.ct = context;
+		ConnectionManager.email = CommonUtilities.getEmail(ct);
 	}
 
 	public void registerGCM() {
@@ -97,7 +104,7 @@ public class ConnectionManager {
 				}
 				else 
 					Log.d("MESSENGO", "token not empty");
-				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/"));
+				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/connection/" + params[0] + "/" + ConnectionManager.email + "/"));
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				String content = ConvertToString.convertStreamToString(entity.getContent());
@@ -111,8 +118,10 @@ public class ConnectionManager {
 				JSONObject obj3 = obj.getJSONObject("infos");
 				if ((obj3.getString("idGoogle").equals("")) || obj3.getString("idGoogle") == null) {
 					broken = true;
+					Log.d("MESSENGO", "idGoogle null");
 					return null;
 				}
+				Log.d("MESSENGO", "idGoogle : " + obj3.getString("idGoogle"));
 				editor.putString("idGoogle", obj3.getString("idGoogle"));
 				editor.putString("passphrase", obj3.getString("passphrase"));
 				editor.commit();
@@ -135,10 +144,11 @@ public class ConnectionManager {
 			super.onPostExecute(result);
 			if (broken == true)
 				Toast.makeText(ct, "Connection problem, try again later.", Toast.LENGTH_LONG).show();
+			callback.GCMCallback();
 		}
 	}
 
-	public void sendSms(String sms, String number) {
+	public void sendSms(String sms, String number, String type) {
 		final SharedPreferences settings = ct.getSharedPreferences(AuthService.PREF_NAME, 0);
 		try {
 			sms = URLEncoder.encode(sms, "UTF-8");
@@ -146,7 +156,11 @@ public class ConnectionManager {
 			e.printStackTrace();
 		}
 		Log.d("MESSENGO", "SendSms");
-		new WSSendSms().execute(settings.getString("idGoogle", ""), settings.getString("passphrase", ""), number, sms);
+		if (number.startsWith("+33") || number.startsWith("33")) {
+			Log.d("MESSENGO", number);
+			number = number.replace("33", "0");
+		}
+		new WSSendSms().execute(settings.getString("idGoogle", ""), settings.getString("passphrase", ""), number, sms, type);
 		Log.d("MESSENGO", "SentSms");
 	}
 
@@ -158,7 +172,10 @@ public class ConnectionManager {
 			HttpGet get = new HttpGet();
 			try {
 				Log.d("MESSENGO", "sending to webservice");
-				get.setURI(new URI("http://messengo.webia-asso.fr/webservice/addMessage/" + params[0] + "/" + params[1] + "/1/" + params[2] + "/" + params[3] + "/"));
+				if (params[4].equals("2"))
+					get.setURI(new URI("http://messengo.webia-asso.fr/webservice/addMessage/" + params[0] + "/" + params[1] + "/1/" + params[2] + "/" + params[3] + "/1/"));
+				else
+					get.setURI(new URI("http://messengo.webia-asso.fr/webservice/addMessage/" + params[0] + "/" + params[1] + "/1/" + params[2] + "/" + params[3] + "/0/"));					
 				HttpResponse response = client.execute(get);
 				HttpEntity entity = response.getEntity();
 				String content = ConvertToString.convertStreamToString(entity.getContent());

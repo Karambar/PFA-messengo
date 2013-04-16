@@ -3,7 +3,9 @@ package com.messengo.messengoPhone;
 import static com.messengo.messengoPhone.CommonUtilities.SERVER_URL;
 import static com.messengo.messengoPhone.CommonUtilities.TAG;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -15,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.google.android.gcm.GCMRegistrar;
@@ -23,17 +26,21 @@ public final class ServerUtilities {
     private static final int MAX_ATTEMPTS = 5;
     private static final int BACKOFF_MILLI_SECONDS = 2000;
     private static final Random random = new Random();
- 
+	public static final String PREF_NAME = "Messengo";
+	public static final String PREF_TOKEN = "accessToken";
     /**
      * Register this account/device pair within the server.
      *
      */
     static void register(final Context context, String email, final String regId) {
+		final SharedPreferences settings = context.getSharedPreferences(PREF_NAME, 0);
+		String idGoogle = settings.getString("idGoogle", "");
+
         Log.i(TAG, "registering device (regId = " + regId + ")");
         String serverUrl = SERVER_URL;
         Map<String, String> params = new HashMap<String, String>();
         params.put("regId", regId);
-        params.put("email", email);
+        params.put("idGoogle", idGoogle);
  
         long backoff = BACKOFF_MILLI_SECONDS + random.nextInt(1000);
         for (int i = 1; i <= MAX_ATTEMPTS; i++) {
@@ -121,6 +128,12 @@ public final class ServerUtilities {
             out.write(bytes);
             out.close();
             // handle the response
+            BufferedReader rd = new BufferedReader(
+            	    new InputStreamReader(conn.getInputStream()));
+            String ch;
+            while ((ch = rd.readLine()) != null) {
+                Log.d("MESSENGO", ch);            	
+            }
             int status = conn.getResponseCode();
             if (status != 200) {
               throw new IOException("Post failed with error code " + status);

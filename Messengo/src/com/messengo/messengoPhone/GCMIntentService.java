@@ -51,17 +51,18 @@ public class GCMIntentService extends GCMBaseIntentService {
 		SharedPreferences pref = context.getSharedPreferences("Messengo", 0);
 		if (pref.getBoolean("active", true)) {
 			String message = intent.getExtras().getString("send sms");
-			Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+			//Toast.makeText(context, message, Toast.LENGTH_LONG).show();
 			try {
 				JSONObject obj = new JSONObject(message);
+				Log.d("MESSENGO", message);
 				String number = obj.getString("number");
 				String msg = URLDecoder.decode(obj.getString("message"), "UTF-8");
 				PendingIntent pi = PendingIntent.getActivity(this, 0,
 						new Intent(this, GCMIntentService.class), 0);                
 				SmsManager sms = SmsManager.getDefault();
 				sms.sendTextMessage(number, null, msg, pi, null); 
-				ConnectionManager cnt = new ConnectionManager(context);
-				cnt.sendSms(msg, number);
+//				ConnectionManager cnt = new ConnectionManager(context);
+//				cnt.sendSms(msg, number, "1");
 				ContentValues values = new ContentValues();
 				values.put("address", number);
 				values.put("body", msg); 

@@ -12,7 +12,7 @@ public class SmsReceiver extends BroadcastReceiver{
 
 	static final String ACTION =
 			"android.provider.Telephony.SMS_RECEIVED";
-
+	
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		String from = "";
@@ -39,9 +39,9 @@ public class SmsReceiver extends BroadcastReceiver{
 				}
 			}
 			if (pref.getBoolean("active", true)) {
-				Toast.makeText(context, buf.toString(), Toast.LENGTH_LONG).show();
+			//	Toast.makeText(context, buf.toString(), Toast.LENGTH_LONG).show();
 				ConnectionManager cnt = new ConnectionManager(context);
-				cnt.sendSms(msg, from);
+				cnt.sendSms(msg, from, "1");
 			}
 		}
 	}

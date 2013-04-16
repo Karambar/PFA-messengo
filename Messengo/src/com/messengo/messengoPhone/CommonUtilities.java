@@ -1,11 +1,8 @@
 package com.messengo.messengoPhone;
 
-import java.util.regex.Pattern;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.Context;
-import android.util.Patterns;
 
 
 
@@ -17,21 +14,28 @@ public final class CommonUtilities {
 
 
 	public static String getEmail(Context context) {
-//		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
-//		Account[] accounts = AccountManager.get(context).getAccounts();
-//		for (Account account : accounts) {
-//			if (emailPattern.matcher(account.name).matches()) {
-//				return account.name;
-//			}
-//		}
-		  AccountManager	googleAccountManager;
-		  Account[] 		allAccounts;
+		//		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
+		//		Account[] accounts = AccountManager.get(context).getAccounts();
+		//		for (Account account : accounts) {
+		//			if (emailPattern.matcher(account.name).matches()) {
+		//				return account.name;
+		//			}
+		//		}
+		//		Pattern emailPattern = Patterns.EMAIL_ADDRESS;
+		//		Account[] accounts = AccountManager.get(context).getAccounts();
+		//		for (Account account : accounts) {
+		//			if (emailPattern.matcher(account.name).matches()) {
+		//				return account.name;
+		//			}
+		//		}
+		AccountManager	googleAccountManager;
+		Account[] 		allAccounts;
 
 
-		  googleAccountManager = AccountManager.get(context);
-	      allAccounts = googleAccountManager.getAccountsByType("com.google");  
-	      
-		
-	      return allAccounts[0].name;
+		googleAccountManager = AccountManager.get(context);
+		allAccounts = googleAccountManager.getAccountsByType("com.google");  
+
+
+		return allAccounts[0].name;
 	}
 }

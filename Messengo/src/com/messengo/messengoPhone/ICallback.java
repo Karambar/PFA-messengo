@@ -4,4 +4,6 @@ public interface ICallback {
 
 	void tokenCallback(String token);
 	
+	void GCMCallback();
+	
 }

@@ -1,13 +1,15 @@
 package com.messengo.messengoPhone;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -18,7 +20,6 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,24 +34,28 @@ public class MessengoSettings extends PreferenceActivity implements ICallback {
 	private Account[]               allAccounts;
 	private SharedPreferences settings;
 	private SharedPreferences.Editor editor;
-	
+
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 
-		googleAccountManager = AccountManager.get(this);
-		allAccounts = googleAccountManager.getAccountsByType("com.google");
+
 		setupSimplePreferencesScreen();
-
-		cntMgr = new ConnectionManager(this);
-		cntMgr.registerGCM();
-
-		gmailAddress = allAccounts[0];
-
+		AccountManager googleAccountManager = AccountManager.get(this.getApplicationContext());
+		Account[] allAccounts = googleAccountManager.getAccountsByType("com.google");
+		Account gmailAddress = allAccounts[0];
 		AuthService.getInstance(this).refreshAuthToken(this, gmailAddress);
 	}
 
-
+	private boolean isMyServiceRunning() {
+		ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+		for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+			if (MessengoService.class.getName().equals(service.service.getClassName())) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@Override
 	public void onResume() {
@@ -74,15 +79,13 @@ public class MessengoSettings extends PreferenceActivity implements ICallback {
 		getPreferenceScreen().addPreference(fakeHeader);
 		addPreferencesFromResource(R.xml.pref_data_sync);
 
-		
-		bindPreferenceSummaryToValue(findPreference("account"));
-		ArrayList<String> entries = new ArrayList<String>();
-		
-		for (int i = 0;i < allAccounts.length ; i++) {
-			entries.add(allAccounts[i].toString());
-		}
-		
-/*		ListPreference accountList = (ListPreference) findPreference("accountList");
+
+//		ArrayList<String> entries = new ArrayList<String>();
+
+//		for (int i = 0;i < allAccounts.length ; i++) {
+//			entries.add(allAccounts[i].toString());
+//		}
+		/*		ListPreference accountList = (ListPreference) findPreference("accountList");
 		String[] entriesArray = entries.toArray(new String[entries.size()]);
 		if (entriesArray == null)
 			Log.d("MESSENGO", "EntriesArray null");
@@ -90,7 +93,7 @@ public class MessengoSettings extends PreferenceActivity implements ICallback {
 			Log.d("MESSENGO", "AccountList null");
 		accountList.setEntries(entriesArray);
 		accountList.setEntryValues(entriesArray);
-*/ 
+		 */ 
 		Preference active = (Preference)findPreference("active_checkbox");
 		active.setOnPreferenceChangeListener(activeMessengo); 
 		Preference save = (Preference)findPreference("saveSms");
@@ -120,15 +123,15 @@ public class MessengoSettings extends PreferenceActivity implements ICallback {
 	};
 
 	public OnPreferenceChangeListener activeMessengo = new Preference.OnPreferenceChangeListener() {            
-	    public boolean onPreferenceChange(Preference preference, Object newValue) {
-	        if(newValue instanceof Boolean){
-	        	editor.putBoolean("active", (Boolean) newValue);
-	        	editor.commit();
-	        }
-	        return true;
-	    }
+		public boolean onPreferenceChange(Preference preference, Object newValue) {
+			if(newValue instanceof Boolean){
+				editor.putBoolean("active", (Boolean) newValue);
+				editor.commit();
+			}
+			return true;
+		}
 	};
-	
+
 	@Override
 	public boolean onIsMultiPane() {
 		return isXLargeTablet(this) && !isSimplePreferences(this);
@@ -173,26 +176,24 @@ public class MessengoSettings extends PreferenceActivity implements ICallback {
 		}
 	};
 
-	private static void bindPreferenceSummaryToValue(Preference preference) {
-		preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-				PreferenceManager
-				.getDefaultSharedPreferences(preference.getContext())
-				.getString(preference.getKey(), ""));
-	}
-
-
-
 	@Override
 	public void tokenCallback(String token) {	
 		settings = getSharedPreferences(AuthService.PREF_NAME, 0);
 		editor = settings.edit();
-		String accessToken = token;   
+		editor.putString("token", token);
+		editor.commit();
 		if (token.equals(""))
 			Log.d("MESSENGO", "AccessToken empty");
-		cntMgr.connectToWS(token);
+		if (isMyServiceRunning() == false) {
+			Intent service = new Intent(MessengoSettings.this, MessengoService.class);
+			service.putExtra("token", token);
+			startService(new Intent(MessengoSettings.this, MessengoService.class));
+		}
 	}
 
-
+	@Override
+	public void GCMCallback() {
+		cntMgr.registerGCM();
+	}
 
 }

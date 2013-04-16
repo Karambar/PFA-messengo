@@ -6,8 +6,6 @@
     <!-- Example General settings -->
     <string name="pref_header_general">Général</string>
     <string name="pref_title_checkbox_active">Activer Messengo</string>
-    <string name="pref_title_display_account">Nom du compte</string>
-    <string name="pref_default_display_name">Votre compte</string>
     <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
 
     <string-array name="pref_example_list_titles">
